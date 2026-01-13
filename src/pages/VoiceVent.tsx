@@ -1,48 +1,76 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageWrapper from '@/components/PageWrapper';
+import VoiceRecorder from '@/components/VoiceRecorder';
 import { supabase } from '@/integrations/supabase/client';
 
-const Vent = () => {
+const VoiceVent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
   const wantsResponse = location.state?.wantsResponse ?? false;
-  const [content, setContent] = useState('');
+  
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleRecordingComplete = (blob: Blob) => {
+    setAudioBlob(blob);
+    setError(null);
+  };
+
+  const handleClear = () => {
+    setAudioBlob(null);
+    setError(null);
+  };
+
   const handleSubmit = async () => {
-    if (!content.trim()) return;
+    if (!audioBlob) return;
     
     setIsSubmitting(true);
     setError(null);
     
     try {
-      // Create the session in the database
-      const { data, error: insertError } = await supabase
+      // Generate unique filename
+      const filename = `${crypto.randomUUID()}.webm`;
+      
+      // Upload audio to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('voice-notes')
+        .upload(filename, audioBlob, {
+          contentType: 'audio/webm',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Create vent session with audio URL
+      const { data: sessionData, error: sessionError } = await supabase
         .from('vent_sessions')
         .insert({
-          content: content.trim(),
+          audio_url: uploadData.path,
           wants_response: wantsResponse,
         })
         .select()
         .single();
-      
-      if (insertError) {
-        throw insertError;
+
+      if (sessionError) {
+        throw sessionError;
       }
-      
+
       // Navigate to thank you page with session info
-      navigate('/thank-you', { state: { sessionId: data.id, isVoice: false } });
+      navigate('/thank-you', { state: { sessionId: sessionData.id, isVoice: true } });
+      
     } catch (err) {
-      console.error('Error submitting vent:', err);
+      console.error('Error submitting voice note:', err);
       setError('Something went wrong. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const canSubmit = content.trim().length > 0;
+  const canSubmit = audioBlob !== null;
 
   return (
     <PageWrapper showFooter={false}>
@@ -57,22 +85,12 @@ const Vent = () => {
           </p>
         </div>
 
-        {/* Text area */}
+        {/* Voice recorder */}
         <div className="pt-4 calm-fade-in" style={{ animationDelay: '0.2s' }}>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Start typing... Whatever is on your mind. It's okay to ramble. It's okay to be messy. This is your space."
-            className="calm-input min-h-[280px] md:min-h-[320px] text-base leading-relaxed"
-            autoFocus
+          <VoiceRecorder
+            onRecordingComplete={handleRecordingComplete}
+            onClear={handleClear}
           />
-        </div>
-
-        {/* Character count (subtle) */}
-        <div className="flex justify-end">
-          <span className="text-xs text-muted-foreground/50">
-            {content.length > 0 && `${content.length} characters`}
-          </span>
         </div>
 
         {/* Error message */}
@@ -105,7 +123,7 @@ const Vent = () => {
         {/* Reassurance */}
         <div className="pt-6 text-center">
           <p className="text-xs text-muted-foreground/60 max-w-sm mx-auto">
-            Your message will be stored securely and anonymously.
+            Your voice note is stored securely and privately.
             You can delete it at any time.
           </p>
         </div>
@@ -114,4 +132,4 @@ const Vent = () => {
   );
 };
 
-export default Vent;
+export default VoiceVent;

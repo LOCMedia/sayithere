@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      vent_sessions: {
+        Row: {
+          audio_url: string | null
+          content: string | null
+          created_at: string
+          deleted: boolean
+          id: string
+          wants_response: boolean
+        }
+        Insert: {
+          audio_url?: string | null
+          content?: string | null
+          created_at?: string
+          deleted?: boolean
+          id?: string
+          wants_response?: boolean
+        }
+        Update: {
+          audio_url?: string | null
+          content?: string | null
+          created_at?: string
+          deleted?: boolean
+          id?: string
+          wants_response?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

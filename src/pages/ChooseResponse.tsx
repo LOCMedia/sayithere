@@ -1,17 +1,24 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircleOff, Heart } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
-import { ResponsePreference } from '@/types/vent';
+import { ResponsePreference, TalkMethod } from '@/types/vent';
 
 const ChooseResponse = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const method: TalkMethod = location.state?.method ?? 'write';
   const [selected, setSelected] = useState<ResponsePreference | null>(null);
 
   const handleContinue = () => {
     if (selected) {
-      // Pass the preference to the vent page
-      navigate('/vent', { state: { wantsResponse: selected === 'gentle-response' } });
+      const wantsResponse = selected === 'gentle-response';
+      // Route to appropriate page based on method
+      if (method === 'voice') {
+        navigate('/voice-vent', { state: { wantsResponse } });
+      } else {
+        navigate('/vent', { state: { wantsResponse } });
+      }
     }
   };
 

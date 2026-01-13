@@ -2,28 +2,65 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import PageWrapper from '@/components/PageWrapper';
-import { useVentSession } from '@/hooks/useVentSession';
+import { supabase } from '@/integrations/supabase/client';
 
 const ThankYou = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { deleteSession } = useVentSession();
   
   const sessionId = location.state?.sessionId;
+  const isVoice = location.state?.isVoice ?? false;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = () => {
-    if (sessionId) {
-      deleteSession(sessionId);
+  const handleDelete = async () => {
+    if (!sessionId) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      // If it's a voice note, we need to delete the audio file too
+      if (isVoice) {
+        // First get the session to find the audio URL
+        const { data: session } = await supabase
+          .from('vent_sessions')
+          .select('audio_url')
+          .eq('id', sessionId)
+          .single();
+        
+        if (session?.audio_url) {
+          // Delete the audio file from storage
+          await supabase.storage
+            .from('voice-notes')
+            .remove([session.audio_url]);
+        }
+      }
+      
+      // Mark session as deleted and clear content
+      await supabase
+        .from('vent_sessions')
+        .update({ 
+          deleted: true, 
+          content: null, 
+          audio_url: null 
+        })
+        .eq('id', sessionId);
+      
       setIsDeleted(true);
       setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error('Error deleting session:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleStartOver = () => {
     navigate('/');
   };
+
+  const messageType = isVoice ? 'voice note' : 'message';
 
   return (
     <PageWrapper>
@@ -59,7 +96,7 @@ const ThankYou = () => {
                 className="calm-button-ghost inline-flex items-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete my message forever
+                Delete my {messageType} forever
               </button>
             ) : (
               <div className="space-y-4 p-4 bg-muted/30 rounded-2xl max-w-sm mx-auto">
@@ -69,9 +106,10 @@ const ThankYou = () => {
                 <div className="flex gap-3 justify-center">
                   <button
                     onClick={handleDelete}
+                    disabled={isDeleting}
                     className="calm-button-secondary text-sm px-4 py-2"
                   >
-                    Yes, delete it
+                    {isDeleting ? 'Deleting...' : 'Yes, delete it'}
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(false)}
@@ -86,7 +124,7 @@ const ThankYou = () => {
         ) : (
           <div className="pt-4 calm-fade-in">
             <p className="text-sm text-primary">
-              ✓ Your message has been permanently deleted.
+              ✓ Your {messageType} has been permanently deleted.
             </p>
           </div>
         )}
