@@ -9,10 +9,9 @@ const ChooseMethod = () => {
   const [selected, setSelected] = useState<TalkMethod | null>(null);
 
   const handleContinue = () => {
-    if (selected === 'write') {
-      navigate('/choose-response');
+    if (selected) {
+      navigate('/choose-response', { state: { method: selected } });
     }
-    // Voice is coming soon, so we don't navigate anywhere for that option
   };
 
   return (
@@ -48,23 +47,19 @@ const ChooseMethod = () => {
             </div>
           </button>
 
-          {/* Voice option (coming soon) */}
+          {/* Voice option */}
           <button
             onClick={() => setSelected('voice')}
-            disabled
-            className={`calm-choice-card w-full text-left flex items-start gap-4 opacity-60 cursor-not-allowed ${
+            className={`calm-choice-card w-full text-left flex items-start gap-4 ${
               selected === 'voice' ? 'selected' : ''
             }`}
           >
-            <div className="p-3 rounded-full bg-muted">
-              <Mic className="w-5 h-5 text-muted-foreground" />
+            <div className="p-3 rounded-full bg-calm-sage-light">
+              <Mic className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
               <h3 className="font-medium text-foreground mb-1">
                 Say it out loud
-                <span className="ml-2 text-xs text-muted-foreground font-normal">
-                  Coming soon
-                </span>
               </h3>
               <p className="text-sm text-muted-foreground">
                 Record a voice note. Sometimes speaking helps.
@@ -77,9 +72,9 @@ const ChooseMethod = () => {
         <div className="pt-6 flex flex-col items-center gap-4">
           <button
             onClick={handleContinue}
-            disabled={!selected || selected === 'voice'}
+            disabled={!selected}
             className={`calm-button-primary ${
-              !selected || selected === 'voice' ? 'opacity-50 cursor-not-allowed' : ''
+              !selected ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             Continue
