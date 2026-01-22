@@ -1,3 +1,4 @@
+import Footer from "./components/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-grow">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/choose-method" element={<ChooseMethod />} />
@@ -28,6 +31,9 @@ const App = () => (
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+          </div>
+        <Footer />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
