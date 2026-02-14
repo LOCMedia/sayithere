@@ -1,4 +1,4 @@
-// Netlify Function: generate-supportive-response
+// Netlify Function: generate-supportive-response (Groq - FREE version)
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
@@ -39,50 +39,38 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Call Claude API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Groq API (FREE!)
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 300,
+        model: 'llama-3.3-70b-versatile', // Fast and high quality
         messages: [
           {
-            role: 'user',
-            content: `You are a compassionate, gentle listener on SayItHere, an anonymous support platform. Someone has shared their feelings with you. Your role is to provide a brief, warm, validating response that makes them feel heard without trying to fix them or give advice.
-
-Current mood: ${mood || 'not specified'}
-
-What they shared:
-"${content}"
-
-Respond with 2-3 sentences that:
-- Validate their feelings without judgment
-- Acknowledge their courage in sharing
-- Offer gentle reassurance
-- Use a warm, natural tone (like talking to a close friend)
-- DON'T give advice or try to fix anything
-- DON'T be overly formal or clinical
-- DON'T ask questions
-
-Keep it under 60 words. Be genuine and human.`,
+            role: 'system',
+            content: 'You are a compassionate, gentle listener on SayItHere, an anonymous support platform. Provide brief, warm, validating responses that make people feel heard without trying to fix them or give advice. Use a warm, natural tone like talking to a close friend. Keep responses under 60 words. Be genuine and human.'
           },
+          {
+            role: 'user',
+            content: `Someone is feeling ${mood || 'uncertain'} and shared: "${content}"\n\nRespond with 2-3 sentences that validate their feelings without judgment, acknowledge their courage in sharing, and offer gentle reassurance. DON'T give advice, be overly formal, or ask questions.`
+          }
         ],
+        temperature: 0.7,
+        max_tokens: 150,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Claude API error:', response.status, errorText);
-      throw new Error(`Claude API error: ${response.status}`);
+      console.error('Groq API error:', response.status, errorText);
+      throw new Error(`Groq API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const aiResponse = data.content[0].text;
+    const aiResponse = data.choices[0].message.content;
 
     return {
       statusCode: 200,
