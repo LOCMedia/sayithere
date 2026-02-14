@@ -10,6 +10,10 @@ import ChooseResponse from "./pages/ChooseResponse";
 import Vent from "./pages/Vent";
 import VoiceVent from "./pages/VoiceVent";
 import ThankYou from "./pages/ThankYou";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import About from "./pages/About";
+import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,17 +26,21 @@ const App = () => (
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
           <div className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/choose-method" element={<ChooseMethod />} />
-          <Route path="/choose-response" element={<ChooseResponse />} />
-          <Route path="/vent" element={<Vent />} />
-          <Route path="/voice-vent" element={<VoiceVent />} />
-          <Route path="/thank-you" element={<ThankYou />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/choose-method" element={<ChooseMethod />} />
+              <Route path="/choose-response" element={<ChooseResponse />} />
+              <Route path="/vent" element={<Vent />} />
+              <Route path="/voice-vent" element={<VoiceVent />} />
+              <Route path="/thank-you" element={<ThankYou />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </div>
-        <Footer />
+          <Footer />
         </div>
       </BrowserRouter>
     </TooltipProvider>
